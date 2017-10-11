@@ -1,26 +1,28 @@
 const fetch = require('node-fetch')
-const util = require('util')
-const parseXML = util.promisify(require('xml2js').parseString)
 const {
     GraphQLSchema,
     GraphQLObjectType,
     GraphQLInt,
-    GraphQLString
+    GraphQLString,
+    GraphQLList
 } = require('graphql')
 
-// fetch(
-//     'https://www.goodreads.com/author/show.xml?id=4432&key=risKm8wwXsIcyEiTktvA'
-// )
-// .then(res => res.text())
-// .then(parseXML)
-
-const AuthorType = new GraphQLObjectType({
+const ReposType = new GraphQLObjectType({
     name: 'Author',
     description: '...',
 
     fields: () => ({
-        name: {
-            type: GraphQLString
+        id: {
+            type: GraphQLInt,
+            resolve: data => data.id
+        },
+        nome: {
+            type: GraphQLString,
+            resolve: data => data.name
+        },
+        nome_completo: {
+            type: GraphQLString,
+            resolve: data => data.full_name
         }
     })
 })
@@ -31,15 +33,14 @@ module.exports = new GraphQLSchema({
         description: '...',
 
         fields: () => ({
-            author: {
-                type: AuthorType,
+            repos: {
+                type: new GraphQLList(ReposType),
                 args: {
-                    id: { type: GraphQLInt}
+                    nome: { type: GraphQLString }
                 },
                 resolve: (root, args) => {
-                    return {
-                        name: 'dariano'
-                    }
+                    return fetch(`https://api.github.com/users/${args.nome}/repos`)
+                        .then(res => res.json())
                 }
             }
         })
